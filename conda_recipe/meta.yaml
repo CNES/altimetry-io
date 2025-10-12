@@ -22,7 +22,7 @@ requirements:
 {%- endfor %}
 
   run:
-    - python>=3.10
+    - python {{ pyproject["project"]["requires-python"] }}
 {%- for item in pyproject["project"]["dependencies"] %}
     - {{ item }}
 {%- endfor %}
