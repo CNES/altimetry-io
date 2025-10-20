@@ -3,11 +3,11 @@
 __all__ = [
     "DOC_PARAMETERS_ALTI_SOURCE",
     "HALF_ORBIT_DTYPE",
+    "ClsTableSource",
     "CnesAltiSource",
     "CnesAltiVariable",
     "FCollectionType",
     "FileCollectionSource",
-    "ClsTableSource",
     "ScCollectionSource",
 ]
 

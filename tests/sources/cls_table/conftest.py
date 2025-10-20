@@ -28,6 +28,8 @@ def ges_table_dir(tmp_path_factory) -> pl.Path:
 
 @pytest.fixture(scope="session")
 def resources_dir(ges_table_dir: pl.Path) -> pl.Path:
+    assert ges_table_dir
+
     rdir = pl.Path(__file__).resolve().parent / "resources"
     os.environ["OCE_DATA"] = str(rdir)
 
@@ -123,7 +125,9 @@ def table_name(init_table) -> str:
 
 
 @pytest.fixture(scope="session")
-def init_orf(tmp_path_factory, resources_dir, dataset):
+def init_orf(resources_dir, dataset):
+    assert resources_dir
+
     orf_name = "ORF_NAME"
     time_values = dataset[INDEX].values
     orf = cls_orf.Orf.create(orf_name, "C2")

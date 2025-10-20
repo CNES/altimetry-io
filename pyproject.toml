@@ -92,38 +92,48 @@ include = ["src/cnes_alti_reader/**/*.py", "tests/**/*.py", "docs/**/*.py"]
 
 [tool.ruff.lint]
 select = [
-            'E', # pycodestyle error
-            'EM', # flake8-return
-            'F', # pyflakes
-            'G', # flake8-logging-format
-            'I',  # import sorting
-            'PTH', # flake8-use-pathlib
-            'W', # pycodestyle warning
-         ]
+    "E",   # pycodestyle error
+    "EM",  # flake8-return
+    "F",   # pyflakes
+    "G",   # flake8-logging-format
+    "I",   # import sorting
+    "PTH", # flake8-use-pathlib
+    "W",   # pycodestyle warning
+    "ARG", # flake8-unused-arguments
+    "PT",  # flake8-pytest-style
+    "INP", # flake8-no-pep420
+    "COM", # flake8-commas
+    "RUF", # Ruff-specific rules
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
 
 ignore = [
-         # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
-          'W191',
-          'E111',
-          'E114',
-          'E117',
-          'D206',
-          'D300',
-          'Q000',
-          'Q001',
-          'Q002',
-          'Q003',
-          'COM812',
-          'COM819',
-          'ISC001',
-          'ISC002',
-          ]
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
+    "ISC001",
+    "ISC002",
+    "ARG002", # Unused argument method (inheritance constraint)
+]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ANN",
-             "S101",  # assert detected
-             "SLF001",  # Private member access
-             ]
+"tests/*" = [
+    "ANN",
+    "S101",   # assert detected
+    "SLF001", # Private member access
+    "INP001", # __init__.py in tests
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["cnes_alti_reader", "tests"]

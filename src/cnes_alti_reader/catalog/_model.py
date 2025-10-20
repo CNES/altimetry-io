@@ -5,7 +5,8 @@ import dataclasses as dc
 import enum
 import os
 import pathlib as pl
-from typing import Any, Mapping, TypeVar
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 import fsspec
 import numpy as np

@@ -132,7 +132,7 @@ def test_query_cycle(swot_collection, cycles):
 
 
 @pytest.mark.parametrize(
-    ["cycles", "passes"],
+    ("cycles", "passes"),
     [(0, 0), (1, 0), (1, [0, 2, 4]), ([1, 2], [0, 2, 4]), (2, 1)],
 )
 def test_query_cycle_pass(swot_collection, cycles, passes):

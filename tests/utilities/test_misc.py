@@ -54,7 +54,7 @@ def test_normalize_polygon(tmp_path):
 
 
 @pytest.mark.parametrize(
-    ["geometry", "res"],
+    ("geometry", "res"),
     [
         (None, None),
         (
@@ -99,7 +99,7 @@ def test_polygon_bounding_box(geometry, res):
 
 
 @pytest.mark.parametrize(
-    ["box", "res"],
+    ("box", "res"),
     [
         ((0, 0, 10, 10), [[0], [0]]),
         ((0, 0, 180, 10), [[0], [0]]),
@@ -117,7 +117,7 @@ def test_restrict_to_box(dataset, box, res):
 
 
 @pytest.mark.parametrize(
-    ["box", "res"],
+    ("box", "res"),
     [
         ((0, 0, 10, 10), [[[0]], [[0]]]),
         ((0, 0, 40, 10), [[[0, 20]], [[0, 10]]]),
@@ -140,7 +140,7 @@ def test_polygon_bounding_box_2d(box, res):
 
 
 @pytest.mark.parametrize(
-    ["geometry", "res"],
+    ("geometry", "res"),
     [
         (
             [
@@ -199,7 +199,7 @@ def test_restrict_to_polygon(dataset, geometry, res):
 
 
 @pytest.mark.parametrize(
-    ["geometry", "res"],
+    ("geometry", "res"),
     [
         (
             [
@@ -310,7 +310,7 @@ def test_normalize_enum():
 
 
 @pytest.mark.parametrize(
-    "fs, expected",
+    ("fs", "expected"),
     [
         (None, fs_local.LocalFileSystem),
         (fs_local.LocalFileSystem(), fs_local.LocalFileSystem),

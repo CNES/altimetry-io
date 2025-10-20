@@ -122,13 +122,13 @@ def data_slice_include_end(
         idx_1 = fun(values, array([val_min]), side="left")[0]
 
         if compute:
-            idx_1 = getattr(idx_1, "compute")()
+            idx_1 = idx_1.compute()
 
     if val_max is not None:
         idx_2 = fun(values, array([val_max]), side="right")[0]
 
         if compute:
-            idx_2 = getattr(idx_2, "compute")()
+            idx_2 = idx_2.compute()
 
     return slice(idx_1, idx_2)
 

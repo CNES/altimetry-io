@@ -18,10 +18,11 @@ from tests.conftest import (
 )
 
 try:
-    import cls_tables  # noqa: F401
+    import cls_tables
 
     have_cls_tables = True
 except ImportError:  # pragma: no cover
+    cls_tables = None
     have_cls_tables = False
 
 if not have_cls_tables:  # pragma: no cover
@@ -55,7 +56,7 @@ def test_period(dataset, table_name):
     assert source.period() == (times[0], times[-1])
 
 
-def test_half_orbit_periods(dataset, table_name, orf_name):
+def test_half_orbit_periods(table_name, orf_name):
     source = ClsTableSource(name=table_name, orf=orf_name)
 
     periods = source.half_orbit_periods()
@@ -82,7 +83,7 @@ def test_half_orbit_periods(dataset, table_name, orf_name):
 
 
 @pytest.mark.parametrize(
-    ["cycle_nb", "pass_nb", "method", "exp_res"],
+    ("cycle_nb", "pass_nb", "method", "exp_res"),
     [
         (1, 1, "equal", (1, 1, 0)),
         (1, 1000, "before", (1, 2, 2)),
@@ -108,7 +109,7 @@ def test_pass_from_indices(
 
 
 @pytest.mark.parametrize(
-    ["date", "method", "exp_res"],
+    ("date", "method", "exp_res"),
     [
         (DATE_START, "equal", (1, 1)),
         (DATE_START, "before", None),
@@ -116,7 +117,7 @@ def test_pass_from_indices(
         (DATE_START + 2 * DATE_STEP, "equal", (1, 2)),
     ],
 )
-def test_pass_from_date(dataset, table_name, orf_name, date, method, exp_res):
+def test_pass_from_date(table_name, orf_name, date, method, exp_res):
     source = ClsTableSource(name=table_name, orf=orf_name)
 
     res = source.pass_from_date(date=date, method=method)

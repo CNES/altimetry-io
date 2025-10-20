@@ -98,7 +98,7 @@ def scheduler_file(tmp_path_factory) -> str:
     return str(sc_file)
 
 
-@pytest.fixture()
+@pytest.fixture
 def dask_client(scheduler_file) -> distributed.Client:
     """Connect a Dask client to the cluster."""
     with distributed.Client(scheduler_file=scheduler_file) as client:

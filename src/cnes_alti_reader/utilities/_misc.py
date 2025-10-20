@@ -299,9 +299,9 @@ def normalize_enum(itype: None | str | T, kls: type[T]) -> T:
     if type(itype) is str:
         try:
             return kls[itype.upper()]
-        except KeyError:
+        except KeyError as e:
             msg = f"{itype} is not a valid {kls.__name__}"
-            raise ValueError(msg)
+            raise ValueError(msg) from e
 
     return kls(itype)
 
