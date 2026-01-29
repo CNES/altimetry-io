@@ -18,7 +18,8 @@ LOGGER = logging.getLogger(__name__)
 T = TypeVar("T", bound=enum.Enum)
 
 PolygonLike: TypeAlias = (
-    "str | gpd_t.GeoDataFrame | shg_t.Polygon | tuple[float, float, float, float]"
+    "str | pl.Path | gpd_t.GeoDataFrame | shg_t.Polygon"
+    "| tuple[float, float, float, float]"
 )
 
 
@@ -28,7 +29,8 @@ def normalize_polygon(polygon: PolygonLike) -> gpd_t.GeoDataFrame:
     Parameters
     ----------
     polygon
-        Polygon as a string (path), a GeoDataFrame or a Polygon.
+        Polygon as a string (path), a GeoDataFrame or a Polygon,
+        or a bounding box as a tuple of floats as (lon_min, lat_min, lon_max, lat_max)
 
     Returns
     -------
