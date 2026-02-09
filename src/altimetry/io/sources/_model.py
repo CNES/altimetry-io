@@ -102,6 +102,47 @@ class AltimetrySource(Generic[T], abc.ABC):
             Set of half orbit periods.
         """
 
+    def query(
+        self,
+        periods: tuple[np.datetime64, np.datetime64]
+        | list[tuple[np.datetime64, np.datetime64]],
+        variables: list[str] | None = None,
+        polygon: PolygonLike | None = None,
+        backend_kwargs: dict[str, Any] | None = None,
+    ) -> xr.Dataset:
+        """Query data between two dates.
+
+        Parameters
+        ----------
+        periods
+            Period or list of periods to query.
+        variables
+            Set of variables to query.
+        polygon
+            Selection polygon on which to reduce the data.
+        backend_kwargs
+            Backend parameters to pass to the query.
+
+        Returns
+        -------
+        :
+            Dataset respecting the query constraints.
+        """
+        if isinstance(periods, tuple):
+            periods = [periods]
+        data = [
+            self.query_date(
+                start=p[0],
+                end=p[1],
+                variables=variables,
+                polygon=polygon,
+                backend_kwargs=backend_kwargs,
+            )
+            for p in periods
+        ]
+
+        return xr.concat(data, dim=self.index)
+
     @abc.abstractmethod
     def query_date(
         self,
@@ -131,44 +172,6 @@ class AltimetrySource(Generic[T], abc.ABC):
         :
             Dataset respecting the query constraints.
         """
-
-    def query_periods(
-        self,
-        periods: list[tuple[np.datetime64, np.datetime64]],
-        variables: list[str] | None = None,
-        polygon: PolygonLike | None = None,
-        backend_kwargs: dict[str, Any] | None = None,
-    ) -> xr.Dataset:
-        """Query data contained in a set of periods.
-
-        Parameters
-        ----------
-        periods
-            Periods to query.
-        variables
-            Set of variables to query.
-        polygon
-            Selection polygon on which to reduce the data.
-        backend_kwargs
-            Backend parameters to pass to the query.
-
-        Returns
-        -------
-        :
-            Dataset respecting the query constraints.
-        """
-        data = [
-            self.query_date(
-                start=p[0],
-                end=p[1],
-                variables=variables,
-                polygon=polygon,
-                backend_kwargs=backend_kwargs,
-            )
-            for p in periods
-        ]
-
-        return xr.concat(data, dim=self.index)
 
     @abc.abstractmethod
     def query_orbit(

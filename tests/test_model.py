@@ -126,15 +126,15 @@ def test_half_orbit_periods():
 
 def test_query_date():
     data = AltimetryData(source=SOURCE)
-    assert data.query_date(start=DATE_START, end=DATE_END).equals(
-        SOURCE.query_date(start=DATE_START, end=DATE_END)
+    assert data.query(periods=(DATE_START, DATE_END)).equals(
+        SOURCE.query(periods=(DATE_START, DATE_END))
     )
 
 
 def test_query_periods():
     data = AltimetryData(source=SOURCE)
-    assert data.query_periods(periods=[(DATE_START, DATE_END)]).equals(
-        SOURCE.query_periods(periods=[(DATE_START, DATE_END)])
+    assert data.query(periods=[(DATE_START, DATE_END)]).equals(
+        SOURCE.query(periods=[(DATE_START, DATE_END)])
     )
 
 

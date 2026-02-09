@@ -94,10 +94,10 @@ class AltimetryData:
             half_orbit_min=half_orbit_min, half_orbit_max=half_orbit_max
         )
 
-    def query_date(
+    def query(
         self,
-        start: np.datetime64,
-        end: np.datetime64,
+        periods: tuple[np.datetime64, np.datetime64]
+        | list[tuple[np.datetime64, np.datetime64]],
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
@@ -106,46 +106,8 @@ class AltimetryData:
 
         Parameters
         ----------
-        start
-            Starting date.
-        end
-            Ending date.
-        variables
-            Set of variables to query.
-        polygon
-            Selection polygon on which to reduce the data.
-            Can be represented as a string or a path to a shapefile, a geopandas
-            GeoDataFrame, a shapely Polygon, or a bounding box representing by a
-            tuple of floats as (lon_min, lat_min, lon_max, lat_max).
-        backend_kwargs
-            Additional parameters to pass to the underlying data source.
-
-        Returns
-        -------
-        :
-            Dataset respecting the query constraints.
-        """
-        return self.source.query_date(
-            start=start,
-            end=end,
-            variables=variables,
-            polygon=polygon,
-            backend_kwargs=backend_kwargs,
-        )
-
-    def query_periods(
-        self,
-        periods: list[tuple[np.datetime64, np.datetime64]],
-        variables: list[str] | None = None,
-        polygon: PolygonLike | None = None,
-        backend_kwargs: dict[str, Any] | None = None,
-    ) -> xr.Dataset:
-        """Query data contained in a set of periods.
-
-        Parameters
-        ----------
         periods
-            Periods to query.
+            Period or list of periods to query.
         variables
             Set of variables to query.
         polygon
@@ -161,7 +123,8 @@ class AltimetryData:
         :
             Dataset respecting the query constraints.
         """
-        return self.source.query_periods(
+
+        return self.source.query(
             periods=periods,
             variables=variables,
             polygon=polygon,

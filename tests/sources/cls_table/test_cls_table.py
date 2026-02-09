@@ -152,10 +152,10 @@ def test_query_dates(dataset, table_name):
                 atol=0,
             )
 
-    data = source.query_periods(periods=[(DATE_START, DATE_END)], variables=[INDEX])
+    data = source.query(periods=[(DATE_START, DATE_END)], variables=[INDEX])
     assert np.array_equal(data[INDEX].values, dataset[INDEX].values)
 
-    data = source.query_periods(
+    data = source.query(
         periods=[
             (DATE_START, DATE_START + 2 * DATE_STEP),
             (DATE_START + 2 * DATE_STEP + DELTA_1_US, DATE_START + 3 * DATE_STEP),
