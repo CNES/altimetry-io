@@ -13,6 +13,8 @@ conda install altimetry-io
 ```
 
 ```python
+from altimetry.io import AltimetryData, FileCollectionSource
+
 alti_data = AltimetryData(
     source=FileCollectionSource(
         path=output_dir,
@@ -22,9 +24,9 @@ alti_data = AltimetryData(
 )
 
 ds = alti_data.query_orbit(
-    cycle_number=13, 
-    pass_number= [153, 155, 157, 181, 183, 209, 211, 237], 
-    variables=["time", "latitude", "longitude", "quality_flag", "ssha_unedited"], 
+    cycle_number=13,
+    pass_number= [153, 155, 157, 181, 183, 209, 211, 237],
+    variables=["time", "latitude", "longitude", "quality_flag", "ssha_unedited"],
     polygon=(-151, -109, 71, 78)
 )
 ```
