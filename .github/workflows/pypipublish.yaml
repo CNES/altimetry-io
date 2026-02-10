@@ -32,11 +32,9 @@ jobs:
           echo "[testpypi]" > ~/.pypirc
           echo "username = __token__" >> ~/.pypirc
           echo "password = ${{ secrets.TEST_PYPI_TOKEN }}" >> ~/.pypirc
-      - name: List dist contents
-        run: ls -lh dist/
       - name: Upload package
         run: |
-          twine upload --repository testpypi dist/* --skip-existing
+          twine upload --repository testpypi dist/*
 
   stable_build:
     if: startsWith(github.ref, 'refs/tags/')
