@@ -50,9 +50,6 @@ sources = [
 ]
 tests = [
     "pytest",
-    "cls_tables",
-    "files-collections",
-    "swot_calval",
     "geopandas",
     "pyinterp",
     "shapely",
