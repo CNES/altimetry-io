@@ -12,30 +12,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v6
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: 3.12
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            cmake \
-            libeigen3-dev
-      - name: Install python dependencies and package
+          environment-name: test-env
+          init-shell: >-
+            bash
+          cache-environment: true
+          post-cleanup: 'all'
+          create-args: >-
+            python=3.12
+            pip
+            fsspec
+            numpy
+            xarray
+            pytest
+            pytest-cov
+            shapely
+            geopandas
+            pyinterp
+            dask
+      - name: Install python dependencies
+        shell: bash -el {0}
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[tests]"
+          pip install pyasynchat
+          pip install -e "."
       - name: Run unit tests
-        # Specify environment for cli runner: simplest terminal possible to properly get
-        # the error messages in the CI setup
+        shell: bash -el {0}
         run: |
-          NO_COLOR=1 TERM=dumb pytest tests --cov=altimetry/io --cov-report=xml:coverage.xml --cov-report=term
+          pytest tests --cov=src --cov-report=xml:coverage-ut.xml --cov-report=term
+          mv .coverage .coverage-ut
       - name: Upload unit test coverage artifacts
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-coverage
           include-hidden-files: true
           path: |
-            .coverage
-            coverage.xml
+            .coverage-ut
+            coverage-ut.xml
