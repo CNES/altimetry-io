@@ -1,4 +1,4 @@
-# Altimetry_io
+# Altimetry-io
 
 Provide a unified way to read a data collection, independent of the underlying data representation.
 
