@@ -53,6 +53,7 @@ tests = [
     "geopandas",
     "pyinterp",
     "shapely",
+    "h5py"
 ]
 coverage = ["pytest-cov"]
 documentation = [
