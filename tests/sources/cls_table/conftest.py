@@ -2,9 +2,20 @@ import os
 import pathlib as pl
 from textwrap import dedent
 
-import cls_tables
-import cls_tables.data.orf as cls_orf
 import pytest
+
+try:
+    import cls_tables
+    import cls_tables.data.orf as cls_orf
+
+    have_cls_tables = True
+except ImportError:  # pragma: no cover
+    cls_tables = None
+    cls_orf = None
+    have_cls_tables = False
+
+if not have_cls_tables:  # pragma: no cover
+    pytest.skip("Skipping CLSTable reader tests", allow_module_level=True)
 
 from tests.conftest import (
     DATE_STEP,

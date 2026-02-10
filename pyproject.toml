@@ -35,7 +35,6 @@ dependencies = [
     "numpy",
     "pandas",
     "xarray",
-    "files-collections",
 ]
 
 [project.optional-dependencies]
@@ -45,12 +44,15 @@ polygon = [
     "shapely",
 ]
 sources = [
+    "files-collections",
     "cls_tables",
     "swot_calval",
 ]
 tests = [
     "pytest",
     "cls_tables",
+    "files-collections",
+    "swot_calval",
     "geopandas",
     "pyinterp",
     "shapely",
