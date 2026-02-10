@@ -32,6 +32,8 @@ jobs:
             geopandas
             pyinterp
             dask
+            h5py 
+            hdf5
       - name: Install python dependencies
         shell: bash -el {0}
         run: |
