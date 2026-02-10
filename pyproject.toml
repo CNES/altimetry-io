@@ -6,12 +6,14 @@ build-backend = "setuptools.build_meta"
 name = "altimetry-io"
 dynamic = ["version"]
 authors = [
+    {name = "Anne-Sophie Tonneau", email = "atonneau@groupcls.com"},
     {name = "Thomas Zilio", email = "tzilio@groupcls.com"},
-    {name = "Anne-Sophie Tonneau", email = "atonneau@groupcls.com"}
+    {name = "Robin Chevrier", email = "rchevrier@groupcls.com"}
 ]
 maintainers = [
+    {name = "Anne-Sophie Tonneau", email = "atonneau@groupcls.com"},
     {name = "Thomas Zilio", email = "tzilio@groupcls.com"},
-    {name = "Anne-Sophie Tonneau", email = "atonneau@groupcls.com"}
+    {name = "Robin Chevrier", email = "rchevrier@groupcls.com"}
 ]
 description = "Provide a unified way to read a data collection, independent of the underlying data representation."
 readme = "README.md"
@@ -38,6 +40,14 @@ dependencies = [
     "files-collections",
 ]
 
+[tool.setuptools.packages.find]
+exclude = ["**/__pycache__", "**/.ipynb_checkpoints"]
+where = ["src"]
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "no-local-version"
+
 [project.optional-dependencies]
 polygon = [
     "geopandas",
@@ -48,12 +58,14 @@ sources = [
     "cls_tables",
     "swot_calval",
 ]
-tests = [
+testing = [
     "pytest",
-    "cls_tables",
     "geopandas",
     "pyinterp",
     "shapely",
+    "h5py",
+    "dask",
+    "numba"
 ]
 coverage = ["pytest-cov"]
 documentation = [
