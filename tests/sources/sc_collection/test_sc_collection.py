@@ -1,5 +1,6 @@
 import pathlib as pl
 
+import distributed
 import numpy as np
 import pandas as pd
 import pytest
@@ -22,6 +23,17 @@ except ImportError:
 
 if not have_sc:
     pytest.skip("Skipping swot_calval related tests", allow_module_level=True)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def dask_client():
+    with distributed.Client(
+        processes=False,
+        dashboard_address=":0",
+        n_workers=1,
+        threads_per_worker=1,
+    ) as client:
+        yield client
 
 
 @pytest.fixture(scope="session")
@@ -130,6 +142,20 @@ def test_query_cycle(swot_collection, cycles):
         assert data.equals(data_ref.to_xarray())
 
 
+def test_query_cycle_concat_false(swot_collection):
+    source = ScCollectionSource(path=swot_collection)
+    collection = sc_io.open_collection(folder=swot_collection)
+
+    fields = [source.time, source.longitude, source.latitude]
+    data = source.query_orbit(cycle_number=1, variables=fields, concat=False)
+
+    fields += [source.cycle_number, source.pass_number]
+    data_ref = collection.query_half_orbits(cycle_numbers=1, selected_variables=fields)
+
+    for i in range(0, len(data)):
+        assert data[i].equals(list(data_ref.values())[i].to_xarray())
+
+
 @pytest.mark.parametrize(
     ("cycles", "passes"),
     [(0, 0), (1, 0), (1, [0, 2, 4]), ([1, 2], [0, 2, 4]), (2, 1)],
@@ -149,6 +175,29 @@ def test_query_cycle_pass(swot_collection, cycles, passes):
         assert data.sizes[source.index] == 0
     else:
         assert data.equals(data_ref.to_xarray())
+
+
+def test_query_cycle_pass_concat_false(swot_collection):
+    source = ScCollectionSource(path=swot_collection)
+    collection = sc_io.open_collection(folder=swot_collection)
+
+    fields = [
+        source.time,
+        source.longitude,
+        source.latitude,
+    ]
+    data = source.query_orbit(
+        cycle_number=1, pass_number=[1, 2], variables=fields, concat=False
+    )
+
+    fields += [source.cycle_number, source.pass_number]
+
+    data_ref = collection.query_half_orbits(
+        cycle_numbers=1, pass_numbers=[1, 2], selected_variables=fields
+    )
+
+    for i in range(0, len(data)):
+        assert data[i].equals(list(data_ref.values())[i].to_xarray())
 
 
 def test_query_polygon(swot_collection):

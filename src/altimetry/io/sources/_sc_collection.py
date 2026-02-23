@@ -45,6 +45,8 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
     longitude: str = "longitude"
     latitude: str = "latitude"
     index: str = "num_lines"
+    pass_number: str = "pass_number"
+    cycle_number: str = "cycle_number"
 
     _collection: sc_io.Collection = dc.field(
         default=None, init=False, repr=False, compare=False
@@ -88,15 +90,15 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
 
         if half_orbit_min is not None:
             mask = (
-                (data["cycle_number"] == half_orbit_min[0])
-                & (data["pass_number"] >= half_orbit_min[1])
-            ) | (data["cycle_number"] > half_orbit_min[0])
+                (data[self.cycle_number] == half_orbit_min[0])
+                & (data[self.pass_number] >= half_orbit_min[1])
+            ) | (data[self.cycle_number] > half_orbit_min[0])
 
         if half_orbit_max is not None:
             mask &= (
-                (data["cycle_number"] == half_orbit_max[0])
-                & (data["pass_number"] <= half_orbit_max[1])
-            ) | (data["cycle_number"] < half_orbit_max[0])
+                (data[self.cycle_number] == half_orbit_max[0])
+                & (data[self.pass_number] <= half_orbit_max[1])
+            ) | (data[self.cycle_number] < half_orbit_max[0])
 
         return pd.DataFrame(data[mask])
 
@@ -139,11 +141,34 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
+        concat: bool = True,
     ) -> xr.Dataset:
         polygon_gpd, _ = self._polygons(polygon=polygon)
 
         if backend_kwargs is None:
             backend_kwargs = {}
+
+        if not concat:
+            # Cycle and pass number variables needed for query_half_orbits
+            if variables is None:
+                variables = []
+            variables = list(set(variables) | {self.cycle_number, self.pass_number})
+
+            data = self._collection.query_half_orbits(
+                cycle_numbers=cycle_number,
+                pass_numbers=pass_number,
+                selected_variables=variables,
+                polygon=None,
+                **backend_kwargs,
+            )
+
+            if data is None:
+                return []
+
+            return [
+                self.restrict_to_polygon(data=zds.to_xarray(), polygon=polygon_gpd)
+                for zds in data.values()
+            ]
 
         data = self._collection.query(
             cycle_numbers=cycle_number,
