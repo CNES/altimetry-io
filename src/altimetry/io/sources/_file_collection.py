@@ -269,6 +269,35 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         if polygon is not None:
             request_kwargs["bbox"] = polygon
 
+        # Deactivate polygon restriction if the polygon was a bbox
+        # -> the selection will be done by fcollections's query
+        polygon_to_restrict = polygon
+        if is_bbox:
+            polygon_to_restrict = None
+
+        if not concat and pass_number is not None:
+            data = []
+            if isinstance(cycle_number, int):
+                cycle_number = [cycle_number]
+            if isinstance(pass_number, int):
+                pass_number = [pass_number]
+
+            combinations = [(c, p) for c in cycle_number for p in pass_number]
+            for c, p in combinations:
+                data.append(
+                    self._database.query(
+                        cycle_number=c,
+                        pass_number=p,
+                        selected_variables=variables,
+                        **request_kwargs,
+                    )
+                )
+
+            return [
+                self.restrict_to_polygon(data=ds, polygon=polygon_to_restrict)
+                for ds in data
+            ]
+
         data = self._database.query(
             cycle_number=cycle_number,
             pass_number=pass_number,
@@ -278,12 +307,7 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         if data is None:
             return self._empty_dataset()
 
-        # Deactivate polygon restriction if the polygon was a bbox
-        # -> the selection was done by fcollections
-        if is_bbox:
-            polygon = None
-
-        return self.restrict_to_polygon(data=data, polygon=polygon)
+        return self.restrict_to_polygon(data=data, polygon=polygon_to_restrict)
 
     def _check_orf(self):
         self._initialize()
