@@ -243,6 +243,7 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
+        concat: bool = True,
     ) -> xr.Dataset:
         backend_kwargs = backend_kwargs or {}
 

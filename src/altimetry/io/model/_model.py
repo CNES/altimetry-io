@@ -100,6 +100,7 @@ class AltimetryData:
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
+        concat: bool = True,
     ) -> xr.Dataset:
         """Query data between two dates.
 
@@ -116,6 +117,9 @@ class AltimetryData:
             tuple of floats as (lon_min, lat_min, lon_max, lat_max).
         backend_kwargs
             Additional parameters to pass to the underlying data source.
+        concat
+            Either to concatenate datasets and return the resulting
+            dataset, or return a list of datasets.
 
         Returns
         -------
@@ -128,6 +132,7 @@ class AltimetryData:
             variables=variables,
             polygon=polygon,
             backend_kwargs=backend_kwargs,
+            concat=concat,
         )
 
     def query_orbit(
@@ -137,6 +142,7 @@ class AltimetryData:
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
+        concat: bool = True,
     ) -> xr.Dataset:
         """Query data for a set of cycles and passes.
 
@@ -155,6 +161,9 @@ class AltimetryData:
             tuple of floats as (lon_min, lat_min, lon_max, lat_max).
         backend_kwargs
             Additional parameters to pass to the underlying data source.
+        concat
+            Either to concatenate datasets and return the resulting
+            dataset, or return a list of datasets.
 
         Returns
         -------
@@ -167,4 +176,5 @@ class AltimetryData:
             variables=variables,
             polygon=polygon,
             backend_kwargs=backend_kwargs,
+            concat=concat,
         )

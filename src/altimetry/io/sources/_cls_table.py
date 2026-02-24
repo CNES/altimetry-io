@@ -266,6 +266,7 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
+        concat: bool = True,
     ) -> xr.Dataset:
         self._check_orf()
 
@@ -302,6 +303,9 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 )
             )
 
+        if not concat:
+            return [self.restrict_to_polygon(data=ds, polygon=polygon) for ds in data]
+
         return self.restrict_to_polygon(
             data=xr.concat(data, dim=self.index), polygon=polygon
         )
@@ -313,6 +317,7 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
+        concat: bool = True,
     ) -> xr.Dataset:
         self._check_orf()
 
@@ -325,6 +330,7 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 variables=variables,
                 polygon=polygon,
                 backend_kwargs=backend_kwargs,
+                concat=concat,
             )
 
         if isinstance(pass_number, int):
@@ -358,6 +364,9 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                         backend_kwargs=backend_kwargs,
                     )
                 )
+
+        if not concat:
+            return [self.restrict_to_polygon(data=ds, polygon=polygon) for ds in data]
 
         return self.restrict_to_polygon(
             data=xr.concat(data, dim=self.index), polygon=polygon

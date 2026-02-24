@@ -109,6 +109,7 @@ class AltimetrySource(Generic[T], abc.ABC):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
+        concat: bool = True,
     ) -> xr.Dataset:
         """Query data between two dates.
 
@@ -122,6 +123,9 @@ class AltimetrySource(Generic[T], abc.ABC):
             Selection polygon on which to reduce the data.
         backend_kwargs
             Backend parameters to pass to the query.
+        concat
+            Either to concatenate datasets and return the resulting
+            dataset, or return a list of datasets.
 
         Returns
         -------
@@ -140,6 +144,9 @@ class AltimetrySource(Generic[T], abc.ABC):
             )
             for p in periods
         ]
+
+        if not concat:
+            return data
 
         return xr.concat(data, dim=self.index)
 
@@ -181,6 +188,7 @@ class AltimetrySource(Generic[T], abc.ABC):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
+        concat: bool = True,
     ) -> xr.Dataset:
         """Query data for a set of cycles and passes.
 
@@ -196,6 +204,9 @@ class AltimetrySource(Generic[T], abc.ABC):
             Selection polygon on which to reduce the data.
         backend_kwargs
             Backend parameters to pass to the query.
+        concat
+            Either to concatenate datasets and return the resulting
+            dataset, or return a list of datasets.
 
         Returns
         -------

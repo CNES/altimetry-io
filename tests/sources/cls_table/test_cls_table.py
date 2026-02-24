@@ -168,6 +168,25 @@ def test_query_dates(dataset, table_name):
     assert np.array_equal(data[INDEX].values, dataset[INDEX].values)
 
 
+def test_query_dates_concat_false(dataset, table_name):
+    source = ClsTableSource(name=table_name)
+
+    data = source.query(
+        periods=[
+            (DATE_START, DATE_START + 1 * DATE_STEP),
+            (DATE_START + 1 * DATE_STEP, DATE_START + 2 * DATE_STEP),
+        ],
+        concat=False,
+    )
+    assert isinstance(data, list)
+    assert data[0].equals(
+        dataset.sel(time=slice(DATE_START, DATE_START + 1 * DATE_STEP))
+    )
+    assert data[1].equals(
+        dataset.sel(time=slice(DATE_START + 1 * DATE_STEP, DATE_START + 2 * DATE_STEP))
+    )
+
+
 def test_query_orbits(caplog, dataset, table_name, orf_name):
     caplog.set_level(logging.WARNING)
     source = ClsTableSource(name=table_name)
@@ -204,3 +223,17 @@ def test_query_orbits(caplog, dataset, table_name, orf_name):
     assert "Cycle 6, pass 1 not found in" in caplog.text
     assert "Cycle 6, pass 3 not found in" in caplog.text
     assert np.array_equal(data[INDEX].values, dataset[INDEX].values[:2])
+
+
+def test_query_orbits_concat_false(dataset, table_name, orf_name):
+    source = ClsTableSource(name=table_name, orf=orf_name)
+
+    data = source.query_orbit(cycle_number=[1, 3], concat=False)
+    assert isinstance(data, list)
+
+    assert data[0].equals(
+        dataset.sel(time=slice(DATE_START, DATE_START + 2 * DATE_STEP))
+    )
+    assert data[1].equals(
+        dataset.sel(time=slice(DATE_START + 3 * DATE_STEP, DATE_START + 4 * DATE_STEP))
+    )
