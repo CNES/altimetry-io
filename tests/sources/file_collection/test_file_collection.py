@@ -208,7 +208,9 @@ def test_query_orbit(fc_source, l3_lr_ssh_basic_1):
     assert not (set(fields) - set(data.variables))
 
 
-def test_query_orbit_concat_false(fc_source, l3_lr_ssh_basic_1, l3_lr_ssh_basic_2):
+def test_query_orbit_concat_false(
+    fc_source, l3_lr_ssh_basic_1, l3_lr_ssh_basic_2, caplog
+):
     data = fc_source.query_orbit(
         cycle_number=NUM_CYCLE, pass_number=[NUM_PASS, NUM_PASS2], concat=False
     )
@@ -230,6 +232,18 @@ def test_query_orbit_concat_false(fc_source, l3_lr_ssh_basic_1, l3_lr_ssh_basic_
         assert np.array_equal(
             data[1][field.name].values, l3_lr_ssh_basic_2[field.name].values
         )
+
+    caplog.set_level(logging.WARNING)
+
+    data = fc_source.query_orbit(cycle_number=NUM_CYCLE, concat=False)
+
+    assert isinstance(data, list)
+    assert len(data) == 2
+    assert any(
+        "No pass_number provided. Available pass numbers in the database are: [1, 2]"
+        in record.message
+        for record in caplog.records
+    )
 
 
 def test_query_orbit_nadir_swath(fc_source, caplog):

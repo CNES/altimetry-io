@@ -269,7 +269,18 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
             # FCollections doesn't allow bbox=None as kwarg
             request_kwargs["bbox"] = polygon
 
-        if not concat and pass_number is not None:
+        if not concat:
+            if pass_number is None:
+                # retrieve available pass numbers corresponding to provided cycle
+                df = self._database.list_files(cycle_number=cycle_number)
+                pass_number = df["pass_number"].unique().tolist()
+
+                LOGGER.warning(
+                    "No pass_number provided. "
+                    "Available pass numbers in the database are: %s",
+                    pass_number,
+                )
+
             data = []
             if isinstance(cycle_number, int):
                 cycle_number = [cycle_number]
