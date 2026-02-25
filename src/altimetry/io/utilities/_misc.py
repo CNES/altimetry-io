@@ -61,8 +61,8 @@ def normalize_polygon(polygon: PolygonLike) -> gpd_t.GeoDataFrame:
 
 
 def polygon_bounding_box(
-    polygon: PolygonLike | None,
-) -> tuple[float, float, float, float] | None:
+    polygon: PolygonLike,
+) -> tuple[float, float, float, float]:
     """Extract the bounding box from provided polygon.
 
     Parameters
@@ -75,9 +75,6 @@ def polygon_bounding_box(
     :
         Polygon's bounding box (min_lon, min_lat, max_lon, max_lat).
     """
-    if polygon is None:
-        return None
-
     if isinstance(polygon, tuple):
         return polygon
 

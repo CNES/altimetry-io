@@ -110,8 +110,6 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
     ) -> xr.Dataset:
-        polygon_gpd, _ = self._polygons(polygon=polygon)
-
         if backend_kwargs is None:
             backend_kwargs = {}
 
@@ -132,6 +130,10 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
             values=(start, end),
             include_end=True,
         )
+        if polygon is None:
+            return data
+
+        polygon_gpd, _ = self._polygons(polygon=polygon)
         return self.restrict_to_polygon(data=data, polygon=polygon_gpd)
 
     def query_orbit(
@@ -142,9 +144,7 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
         concat: bool = True,
-    ) -> xr.Dataset:
-        polygon_gpd, _ = self._polygons(polygon=polygon)
-
+    ) -> xr.Dataset | list[xr.Dataset]:
         if backend_kwargs is None:
             backend_kwargs = {}
 
@@ -152,8 +152,9 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
             # Cycle and pass number variables needed for query_half_orbits
             if variables is None:
                 variables = []
-            variables = list(set(variables) | {self.cycle_number, self.pass_number})
+            variables = list({*variables, self.cycle_number, self.pass_number})
 
+            # swot_calval polygon selection feature is bypassed since it's not reliable
             data = self._collection.query_half_orbits(
                 cycle_numbers=cycle_number,
                 pass_numbers=pass_number,
@@ -165,10 +166,12 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
             if data is None:
                 return []
 
-            return [
-                self.restrict_to_polygon(data=zds.to_xarray(), polygon=polygon_gpd)
-                for zds in data.values()
-            ]
+            data = [zds.to_xarray() for zds in data.values()]
+            if polygon is None:
+                return data
+
+            polygon_gpd, _ = self._polygons(polygon)
+            return [self.restrict_to_polygon(data=d, polygon=polygon_gpd) for d in data]
 
         data = self._collection.query(
             cycle_numbers=cycle_number,
@@ -181,17 +184,18 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
         if data is None:
             return self._empty_dataset()
 
-        return self.restrict_to_polygon(data=data.to_xarray(), polygon=polygon_gpd)
+        data = data.to_xarray()
+
+        if polygon is None:
+            return data
+
+        polygon_gpd, _ = self._polygons(polygon)
+        return self.restrict_to_polygon(data=data, polygon=polygon_gpd)
 
     @staticmethod
-    def _polygons(
-        polygon: PolygonLike | None,
-    ) -> tuple[gpd_t.GeoDataFrame | None, pyi_geo_t.Polygon | None]:
+    def _polygons(polygon: PolygonLike) -> tuple[gpd_t.GeoDataFrame, pyi_geo_t.Polygon]:
         """Normalize provided polygon to a GeoDataFrame and, if possible, a
         pyinterp.geodetic.Polygon."""
-        if polygon is None:
-            return None, None
-
         polygon_gpd = normalize_polygon(polygon=polygon)
 
         try:

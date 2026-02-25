@@ -101,7 +101,7 @@ class AltimetryData:
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
         concat: bool = True,
-    ) -> xr.Dataset:
+    ) -> xr.Dataset | list[xr.Dataset]:
         """Query data between two dates.
 
         Parameters
@@ -118,13 +118,14 @@ class AltimetryData:
         backend_kwargs
             Additional parameters to pass to the underlying data source.
         concat
-            Either to concatenate datasets and return the resulting
-            dataset, or return a list of datasets.
+            By default, each period is requested individually and the resulting datasets
+            are concatenated into a single complete dataset. If this parameter is set to
+            False, a list of datasets (one per period) is returned instead.
 
         Returns
         -------
         :
-            Dataset respecting the query constraints.
+            Dataset or list of datasets respecting the query constraints.
         """
 
         return self.source.query(
@@ -143,7 +144,7 @@ class AltimetryData:
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
         concat: bool = True,
-    ) -> xr.Dataset:
+    ) -> xr.Dataset | list[xr.Dataset]:
         """Query data for a set of cycles and passes.
 
         Parameters
@@ -162,13 +163,15 @@ class AltimetryData:
         backend_kwargs
             Additional parameters to pass to the underlying data source.
         concat
-            Either to concatenate datasets and return the resulting
-            dataset, or return a list of datasets.
+            By default, each half orbit is requested individually and the resulting
+            datasets are concatenated into a single complete dataset. If this
+            parameter is set to False, a list of datasets (one per half orbit) is
+            returned instead.
 
         Returns
         -------
         :
-            Dataset respecting the query constraints.
+            Dataset or list of datasets respecting the query constraints.
         """
         return self.source.query_orbit(
             cycle_number=cycle_number,

@@ -258,6 +258,10 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 variables, start, end, include_end=True, **backend_kwargs
             )
 
+        # Deactivate polygon restriction if the polygon is None
+        if polygon is None:
+            return data
+
         return self.restrict_to_polygon(data=data, polygon=polygon)
 
     def _query_cycle(
@@ -267,7 +271,7 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
         concat: bool = True,
-    ) -> xr.Dataset:
+    ) -> xr.Dataset | list[xr.Dataset]:
         self._check_orf()
 
         data = []
@@ -304,11 +308,17 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
             )
 
         if not concat:
+            # Deactivate polygon restriction if the polygon is None
+            if polygon is None:
+                return data
             return [self.restrict_to_polygon(data=ds, polygon=polygon) for ds in data]
 
-        return self.restrict_to_polygon(
-            data=xr.concat(data, dim=self.index), polygon=polygon
-        )
+        data = xr.concat(data, dim=self.index)
+
+        # Deactivate polygon restriction if the polygon is None
+        if polygon is None:
+            return data
+        return self.restrict_to_polygon(data=data, polygon=polygon)
 
     def query_orbit(
         self,
@@ -318,7 +328,7 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
         concat: bool = True,
-    ) -> xr.Dataset:
+    ) -> xr.Dataset | list[xr.Dataset]:
         self._check_orf()
 
         if isinstance(cycle_number, int):
@@ -366,11 +376,17 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 )
 
         if not concat:
+            # Deactivate polygon restriction if the polygon is None
+            if polygon is None:
+                return data
             return [self.restrict_to_polygon(data=ds, polygon=polygon) for ds in data]
 
-        return self.restrict_to_polygon(
-            data=xr.concat(data, dim=self.index), polygon=polygon
-        )
+        data = xr.concat(data, dim=self.index)
+
+        # Deactivate polygon restriction if the polygon is None
+        if polygon is None:
+            return data
+        return self.restrict_to_polygon(data=data, polygon=polygon)
 
     def _check_orf(self):
         if self.orf is None:

@@ -215,10 +215,10 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         }
         is_bbox = isinstance(polygon, tuple)
 
-        polygon = polygon_bounding_box(polygon=polygon)
-
-        # FCollections doesn't allow bbox=None as kwarg
         if polygon is not None:
+            polygon = polygon_bounding_box(polygon)
+
+            # FCollections doesn't allow bbox=None as kwarg
             request_kwargs["bbox"] = polygon
 
         data = self._database.query(
@@ -229,10 +229,10 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         if data is None:
             return self._empty_dataset()
 
-        # Deactivate polygon restriction if the polygon was a bbox
-        # -> the selection was done by fcollections
-        if is_bbox:
-            polygon = None
+        # Deactivate polygon restriction if the polygon is None or was
+        # a bbox -> the selection will be done by fcollections's query
+        if polygon is None or is_bbox:
+            return data
 
         return self.restrict_to_polygon(data=data, polygon=polygon)
 
@@ -244,7 +244,7 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
         concat: bool = True,
-    ) -> xr.Dataset:
+    ) -> xr.Dataset | list[xr.Dataset]:
         backend_kwargs = backend_kwargs or {}
 
         if "nadir" in backend_kwargs or "swath" in backend_kwargs:
@@ -263,17 +263,11 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         }
         is_bbox = isinstance(polygon, tuple)
 
-        polygon = polygon_bounding_box(polygon=polygon)
-
-        # FCollections doesn't allow bbox=None as kwarg
         if polygon is not None:
-            request_kwargs["bbox"] = polygon
+            polygon = polygon_bounding_box(polygon)
 
-        # Deactivate polygon restriction if the polygon was a bbox
-        # -> the selection will be done by fcollections's query
-        polygon_to_restrict = polygon
-        if is_bbox:
-            polygon_to_restrict = None
+            # FCollections doesn't allow bbox=None as kwarg
+            request_kwargs["bbox"] = polygon
 
         if not concat and pass_number is not None:
             data = []
@@ -292,11 +286,12 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
                         **request_kwargs,
                     )
                 )
+            # Deactivate polygon restriction if the polygon is None or was
+            # a bbox -> the selection will be done by fcollections's query
+            if polygon is None or is_bbox:
+                return data
 
-            return [
-                self.restrict_to_polygon(data=ds, polygon=polygon_to_restrict)
-                for ds in data
-            ]
+            return [self.restrict_to_polygon(data=ds, polygon=polygon) for ds in data]
 
         data = self._database.query(
             cycle_number=cycle_number,
@@ -307,7 +302,12 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         if data is None:
             return self._empty_dataset()
 
-        return self.restrict_to_polygon(data=data, polygon=polygon_to_restrict)
+        # Deactivate polygon restriction if the polygon is None or was
+        # a bbox -> the selection will be done by fcollections's query
+        if polygon is None or is_bbox:
+            return data
+
+        return self.restrict_to_polygon(data=data, polygon=polygon)
 
     def _check_orf(self):
         self._initialize()

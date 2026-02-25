@@ -197,6 +197,7 @@ def test_query_orbits(caplog, dataset, table_name, orf_name):
     source = ClsTableSource(name=table_name, orf=orf_name)
 
     data = source.query_orbit(cycle_number=1, variables=[INDEX])
+
     assert np.array_equal(data[INDEX].values, dataset[INDEX].values[:3])
 
     caplog.clear()
