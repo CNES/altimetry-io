@@ -273,7 +273,7 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
             if pass_number is None:
                 # retrieve available pass numbers corresponding to provided cycle
                 df = self._database.list_files(cycle_number=cycle_number)
-                pass_number = df["pass_number"].unique().tolist()
+                pass_number = sorted(df["pass_number"].unique().tolist())
 
                 LOGGER.warning(
                     "No pass_number provided. "
