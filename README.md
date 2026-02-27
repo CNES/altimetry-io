@@ -2,7 +2,7 @@
 
 A library providing a unified way to read an altimetry data collection, independent of the underlying data representation.
 
-- Relies on [Files Collections](https://pypi.org/project/files-collections/) for NetCDF files collections reading
+- Relies on [Files Collections](https://cnes.github.io/fcollections/) for NetCDF files collections reading
 - Can also read ZCollections format
 
 ## Installation
@@ -18,8 +18,11 @@ from altimetry.io import AltimetryData, FileCollectionSource
 
 alti_data = AltimetryData(
     source=FileCollectionSource(
-        path=output_dir,
+        # Path to a local directory containing NetCDF data
+        path="data_dir",
+        # Available ftype: SWOT_L2_LR_SSH, SWOT_L3_LR_SSH, SWOT_L3_LR_WIND_WAVE, NADIR_L2, NADIR_L3
         ftype="SWOT_L3_LR_SSH",
+        # Available ftype for SWOT_L3_LR_SSH: Basic, Expert, Unsmoothed, Technical
         subset="Unsmoothed"
     ),
 )
@@ -37,7 +40,6 @@ Output:
 
 ```text
 Frozen({'num_lines': 15893, 'num_pixels': 519})
-
 ```
 
 ```python
