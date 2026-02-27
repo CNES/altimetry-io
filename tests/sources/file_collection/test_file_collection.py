@@ -47,6 +47,64 @@ def data_ref(fc_source) -> xr.Dataset:
     return fc_source.query_date(start=DATE_START, end=DATE_END)
 
 
+@pytest.fixture(scope="session")
+def empty_fc_source(empty_data_dir) -> FileCollectionSource:
+    """Get a file collection from an empty data dir."""
+    return FileCollectionSource(
+        path=empty_data_dir, ftype="SWOT_L3_LR_SSH", subset="Basic"
+    )
+
+
+@pytest.fixture(scope="session")
+def fc_source_l2_basic(data_dir) -> FileCollectionSource:
+    """Get a file collection that is not present in the data dir."""
+    return FileCollectionSource(path=data_dir, ftype="SWOT_L2_LR_SSH", subset="Basic")
+
+
+class TestEmptyDatadir:
+    def test_variables(self, empty_fc_source):
+        with pytest.warns(UserWarning, match="No files found with current filters"):
+            assert empty_fc_source.variables() == {}
+
+    def test_period(self, empty_fc_source):
+        assert empty_fc_source.period() == (None, None)
+
+    def test_half_orbit_periods(self, empty_fc_source):
+        ho_periods = empty_fc_source.half_orbit_periods()
+
+        assert ho_periods.size == 0
+
+    def test_query(self, empty_fc_source):
+        data = empty_fc_source.query_date(start=DATE_START, end=DATE_END)
+        assert not data
+
+        data = empty_fc_source.query_orbit(cycle_number=NUM_CYCLE, pass_number=NUM_PASS)
+        assert not data
+
+
+class TestBadFCSourceInDir:
+    def test_variables(self, fc_source_l2_basic):
+        with pytest.warns(UserWarning, match="No files found with current filters"):
+            assert fc_source_l2_basic.variables() == {}
+
+    def test_period(self, fc_source_l2_basic):
+        assert fc_source_l2_basic.period() == (None, None)
+
+    def test_half_orbit_periods(self, fc_source_l2_basic):
+        ho_periods = fc_source_l2_basic.half_orbit_periods()
+
+        assert ho_periods.size == 0
+
+    def test_query(self, fc_source_l2_basic):
+        data = fc_source_l2_basic.query_date(start=DATE_START, end=DATE_END)
+        assert not data
+
+        data = fc_source_l2_basic.query_orbit(
+            cycle_number=NUM_CYCLE, pass_number=NUM_PASS
+        )
+        assert not data
+
+
 def test_handler(fc_source):
     assert isinstance(fc_source.handler, fc_impl.NetcdfFilesDatabaseSwotLRL3)
 

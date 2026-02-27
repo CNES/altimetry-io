@@ -46,6 +46,13 @@ def swot_collection() -> pl.Path:
     return sc_data / "collection"
 
 
+def test_bad_path():
+    with pytest.raises(
+        ValueError, match="zarr collection not found at path '/bad/path'"
+    ):
+        ScCollectionSource(path="/bad/path")
+
+
 def test_handler(swot_collection):
     source = ScCollectionSource(path=swot_collection)
 
