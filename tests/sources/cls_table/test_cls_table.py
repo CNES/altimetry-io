@@ -1,5 +1,3 @@
-import logging
-
 import numpy as np
 import pytest
 
@@ -168,8 +166,26 @@ def test_query_dates(dataset, table_name):
     assert np.array_equal(data[INDEX].values, dataset[INDEX].values)
 
 
-def test_query_orbits(caplog, dataset, table_name, orf_name):
-    caplog.set_level(logging.WARNING)
+def test_query_dates_concat_false(dataset, table_name):
+    source = ClsTableSource(name=table_name)
+
+    data = source.query(
+        periods=[
+            (DATE_START, DATE_START + 1 * DATE_STEP),
+            (DATE_START + 1 * DATE_STEP, DATE_START + 2 * DATE_STEP),
+        ],
+        concat=False,
+    )
+    assert isinstance(data, list)
+    assert data[0].equals(
+        dataset.sel(time=slice(DATE_START, DATE_START + 1 * DATE_STEP))
+    )
+    assert data[1].equals(
+        dataset.sel(time=slice(DATE_START + 1 * DATE_STEP, DATE_START + 2 * DATE_STEP))
+    )
+
+
+def test_query_orbits(dataset, table_name, orf_name):
     source = ClsTableSource(name=table_name)
 
     with pytest.raises(ValueError, match="An orf must be set"):
@@ -178,29 +194,41 @@ def test_query_orbits(caplog, dataset, table_name, orf_name):
     source = ClsTableSource(name=table_name, orf=orf_name)
 
     data = source.query_orbit(cycle_number=1, variables=[INDEX])
+
     assert np.array_equal(data[INDEX].values, dataset[INDEX].values[:3])
 
-    caplog.clear()
+    with pytest.warns(UserWarning, match="Cycle 2 not found in ORF_NAME."):
+        source.query_orbit(cycle_number=2, variables=[INDEX])
 
-    data = source.query_orbit(cycle_number=2, variables=[INDEX])
-    assert "Cycle 2 not found in" in caplog.text
-    assert data.sizes[INDEX] == 0
-
-    caplog.clear()
-
-    data = source.query_orbit(cycle_number=[1, 2, 3, 4], variables=[INDEX])
-    assert "Cycle 2 not found in" in caplog.text
+    with pytest.warns(UserWarning, match="not found in ORF_NAME") as record:
+        data = source.query_orbit(cycle_number=[1, 2, 3, 4], variables=[INDEX])
+    assert len(record) == 2
+    assert "Cycle 2 not found in ORF_NAME." in str(record[0].message)
+    assert "Cycle 4 not found in ORF_NAME." in str(record[1].message)
     assert np.array_equal(data[INDEX].values, dataset[INDEX].values)
 
     data = source.query_orbit(cycle_number=1, pass_number=1, variables=[INDEX])
     assert np.array_equal(data[INDEX].values, dataset[INDEX].values[:2])
 
-    caplog.clear()
-
-    data = source.query_orbit(
-        cycle_number=[1, 6], pass_number=[1, 3], variables=[INDEX]
-    )
-    assert "Cycle 1, pass 3 not found in" in caplog.text
-    assert "Cycle 6, pass 1 not found in" in caplog.text
-    assert "Cycle 6, pass 3 not found in" in caplog.text
+    with pytest.warns(UserWarning, match="not found in ORF_NAME") as record:
+        data = source.query_orbit(
+            cycle_number=[1, 6], pass_number=[1, 3], variables=[INDEX]
+        )
+    assert "Cycle 1, pass 3 not found in ORF_NAME" in str(record[0].message)
+    assert "Cycle 6, pass 1 not found in ORF_NAME." in str(record[1].message)
+    assert "Cycle 6, pass 3 not found in ORF_NAME." in str(record[2].message)
     assert np.array_equal(data[INDEX].values, dataset[INDEX].values[:2])
+
+
+def test_query_orbits_concat_false(dataset, table_name, orf_name):
+    source = ClsTableSource(name=table_name, orf=orf_name)
+
+    data = source.query_orbit(cycle_number=[1, 3], concat=False)
+    assert isinstance(data, list)
+
+    assert data[0].equals(
+        dataset.sel(time=slice(DATE_START, DATE_START + 2 * DATE_STEP))
+    )
+    assert data[1].equals(
+        dataset.sel(time=slice(DATE_START + 3 * DATE_STEP, DATE_START + 4 * DATE_STEP))
+    )

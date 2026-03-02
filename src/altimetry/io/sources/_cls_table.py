@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import dataclasses as dc
-import logging
+import warnings
 from contextlib import AbstractContextManager
 from functools import lru_cache
 from typing import Any
@@ -20,8 +20,6 @@ from ._model import (
     AltimetrySource,
     AltimetryVariable,
 )
-
-LOGGER = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=10000)
@@ -258,6 +256,10 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 variables, start, end, include_end=True, **backend_kwargs
             )
 
+        # Deactivate polygon restriction if the polygon is None
+        if polygon is None:
+            return data
+
         return self.restrict_to_polygon(data=data, polygon=polygon)
 
     def _query_cycle(
@@ -266,7 +268,8 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
-    ) -> xr.Dataset:
+        concat: bool = True,
+    ) -> xr.Dataset | list[xr.Dataset]:
         self._check_orf()
 
         data = []
@@ -288,7 +291,8 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 or pass_start_info[0] != cycle_nb
                 or pass_end_info[0] != cycle_nb
             ):
-                LOGGER.warning("Cycle %s not found in %s.", cycle_nb, self.orf)
+                msg = f"Cycle {cycle_nb} not found in {self.orf}."
+                warnings.warn(msg, UserWarning, stacklevel=2)
                 data.append(self._empty_dataset())
                 continue
 
@@ -302,9 +306,18 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 )
             )
 
-        return self.restrict_to_polygon(
-            data=xr.concat(data, dim=self.index), polygon=polygon
-        )
+        if not concat:
+            # Deactivate polygon restriction if the polygon is None
+            if polygon is None:
+                return data
+            return [self.restrict_to_polygon(data=ds, polygon=polygon) for ds in data]
+
+        data = xr.concat(data, dim=self.index)
+
+        # Deactivate polygon restriction if the polygon is None
+        if polygon is None:
+            return data
+        return self.restrict_to_polygon(data=data, polygon=polygon)
 
     def query_orbit(
         self,
@@ -313,7 +326,8 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
-    ) -> xr.Dataset:
+        concat: bool = True,
+    ) -> xr.Dataset | list[xr.Dataset]:
         self._check_orf()
 
         if isinstance(cycle_number, int):
@@ -325,6 +339,7 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 variables=variables,
                 polygon=polygon,
                 backend_kwargs=backend_kwargs,
+                concat=concat,
             )
 
         if isinstance(pass_number, int):
@@ -340,12 +355,8 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 )
 
                 if pass_info is None:
-                    LOGGER.warning(
-                        "Cycle %s, pass %s not found in %s.",
-                        cycle_nb,
-                        pass_nb,
-                        self.orf,
-                    )
+                    msg = f"Cycle {cycle_nb}, pass {pass_nb} not found in {self.orf}."
+                    warnings.warn(msg, UserWarning, stacklevel=2)
                     data.append(self._empty_dataset())
                     continue
 
@@ -359,9 +370,18 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                     )
                 )
 
-        return self.restrict_to_polygon(
-            data=xr.concat(data, dim=self.index), polygon=polygon
-        )
+        if not concat:
+            # Deactivate polygon restriction if the polygon is None
+            if polygon is None:
+                return data
+            return [self.restrict_to_polygon(data=ds, polygon=polygon) for ds in data]
+
+        data = xr.concat(data, dim=self.index)
+
+        # Deactivate polygon restriction if the polygon is None
+        if polygon is None:
+            return data
+        return self.restrict_to_polygon(data=data, polygon=polygon)
 
     def _check_orf(self):
         if self.orf is None:

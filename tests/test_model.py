@@ -10,11 +10,11 @@ import xarray as xr
 
 from altimetry.io import AltimetryData
 from altimetry.io.sources import AltimetrySource, AltimetryVariable
+from altimetry.io.utilities import PolygonLike
 from tests.conftest import DATE_END, DATE_START, INDEX, LATITUDE, LONGITUDE
 
 if TYPE_CHECKING:
-    import geopandas as gpd_t
-    import shapely.geometry as shg_t
+    pass
 
 
 @dc.dataclass(kw_only=True)
@@ -56,16 +56,7 @@ class FakeSource(AltimetrySource[int]):
         start: np.datetime64,
         end: np.datetime64,
         variables: list[str] | None = None,
-        polygon: str | gpd_t.GeoDataFrame | shg_t.Polygon | None = None,
-        backend_kwargs: dict[str, Any] | None = None,
-    ) -> xr.Dataset:
-        return xr.Dataset()
-
-    def query_periods(
-        self,
-        periods: list[tuple[np.datetime64, np.datetime64]],
-        variables: list[str] | None = None,
-        polygon: str | gpd_t.GeoDataFrame | shg_t.Polygon | None = None,
+        polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
     ) -> xr.Dataset:
         return xr.Dataset()
@@ -75,9 +66,12 @@ class FakeSource(AltimetrySource[int]):
         cycle_number: int | list[int],
         pass_number: int | list[int] | None = None,
         variables: list[str] | None = None,
-        polygon: str | gpd_t.GeoDataFrame | shg_t.Polygon | None = None,
+        polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
+        concat: bool = True,
     ) -> xr.Dataset:
+        if not concat:
+            return [xr.Dataset()]
         return xr.Dataset()
 
 
@@ -85,33 +79,33 @@ SOURCE = FakeSource(time=INDEX, longitude=LONGITUDE, latitude=LATITUDE)
 
 
 def test_handler():
-    data = AltimetryData(source=SOURCE)
+    alti_data = AltimetryData(source=SOURCE)
 
-    assert data.handler == 1
+    assert alti_data.handler == 1
 
 
 def test_variables():
-    data = AltimetryData(source=SOURCE)
+    alti_data = AltimetryData(source=SOURCE)
 
-    assert data.variables() == SOURCE.variables()
+    assert alti_data.variables() == SOURCE.variables()
 
 
 def test_show_variables():
-    data = AltimetryData(source=SOURCE)
+    alti_data = AltimetryData(source=SOURCE)
 
-    assert set(data.show_variables()["name"]) == set(SOURCE.variables())
+    assert set(alti_data.show_variables()["name"]) == set(SOURCE.variables())
 
-    assert set(data.show_variables(containing="LoNgItUde")["name"]) == {
+    assert set(alti_data.show_variables(containing="LoNgItUde")["name"]) == {
         SOURCE.longitude
     }
 
-    assert set(data.show_variables(containing="coord")["name"]) == {
+    assert set(alti_data.show_variables(containing="coord")["name"]) == {
         SOURCE.time,
         SOURCE.longitude,
         SOURCE.latitude,
     }
 
-    assert set(data.show_variables(containing="___")["name"]) == set()
+    assert set(alti_data.show_variables(containing="___")["name"]) == set()
 
 
 def test_periods():
@@ -124,28 +118,49 @@ def test_half_orbit_periods():
     assert data.half_orbit_periods().equals(SOURCE.half_orbit_periods())
 
 
-def test_query_date():
-    data = AltimetryData(source=SOURCE)
-    assert data.query(periods=(DATE_START, DATE_END)).equals(
+def test_query():
+    alti_data = AltimetryData(source=SOURCE)
+    assert alti_data.query(periods=(DATE_START, DATE_END)).equals(
         SOURCE.query(periods=(DATE_START, DATE_END))
     )
-
-
-def test_query_periods():
-    data = AltimetryData(source=SOURCE)
-    assert data.query(periods=[(DATE_START, DATE_END)]).equals(
+    assert alti_data.query(periods=[(DATE_START, DATE_END)]).equals(
         SOURCE.query(periods=[(DATE_START, DATE_END)])
+    )
+    assert alti_data.query(
+        periods=[(DATE_START, DATE_END), (DATE_START, DATE_END)]
+    ).equals(SOURCE.query(periods=[(DATE_START, DATE_END), (DATE_START, DATE_END)]))
+    # testing with concat = False
+    data_ref = alti_data.query(
+        periods=[(DATE_START, DATE_END), (DATE_START, DATE_END)], concat=False
+    )
+    data = SOURCE.query(
+        periods=[(DATE_START, DATE_END), (DATE_START, DATE_END)], concat=False
+    )
+    assert isinstance(data, list)
+    assert all(d1.equals(d2) for d1, d2 in zip(data, data_ref, strict=True))
+
+
+def test_query_date():
+    alti_data = AltimetryData(source=SOURCE)
+    assert alti_data.query(periods=[(DATE_START, DATE_END)]).equals(
+        SOURCE.query_date(start=DATE_START, end=DATE_END)
     )
 
 
 def test_query_orbit():
-    data = AltimetryData(source=SOURCE)
-    assert data.query_orbit(cycle_number=3).equals(SOURCE.query_orbit(cycle_number=3))
+    alti_data = AltimetryData(source=SOURCE)
+    assert alti_data.query_orbit(cycle_number=3).equals(
+        SOURCE.query_orbit(cycle_number=3)
+    )
 
-    data = AltimetryData(source=SOURCE)
-    assert data.query_orbit(cycle_number=3, pass_number=1).equals(
+    assert alti_data.query_orbit(cycle_number=3, pass_number=1).equals(
         SOURCE.query_orbit(cycle_number=3, pass_number=1)
     )
+    # testing with concat = False
+    data_ref = alti_data.query_orbit(cycle_number=3, concat=False)
+    data = SOURCE.query_orbit(cycle_number=3, concat=False)
+    assert isinstance(data, list)
+    assert all(d1.equals(d2) for d1, d2 in zip(data, data_ref, strict=True))
 
 
 def test_restrict_to_polygon(dataset):

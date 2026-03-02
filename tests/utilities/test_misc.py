@@ -61,7 +61,6 @@ def test_normalize_polygon(tmp_path):
 @pytest.mark.parametrize(
     ("geometry", "res"),
     [
-        (None, None),
         ((-180, -90, 10, 10), (-180, -90, 10, 10)),
         (
             [

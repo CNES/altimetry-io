@@ -1,5 +1,3 @@
-import logging
-
 import numpy as np
 import pytest
 import shapely as shp
@@ -11,11 +9,13 @@ from altimetry.io.utilities import restrict_to_polygon
 from .conftest import (
     CYCLE_NUMBER,
     DATE_END,
+    DATE_END2,
     DATE_START,
     LATITUDE,
     LONGITUDE,
     NUM_CYCLE,
     NUM_PASS,
+    NUM_PASS2,
     PASS_NUMBER,
     TIME,
     VAR1,
@@ -68,7 +68,7 @@ def test_variables(fc_source, data_dir):
 
 
 def test_period(fc_source):
-    assert fc_source.period() == (DATE_START, DATE_END)
+    assert fc_source.period() == (DATE_START, DATE_END2)
 
 
 def test_half_orbit_periods(fc_source):
@@ -76,11 +76,11 @@ def test_half_orbit_periods(fc_source):
 
     assert np.array_equal(
         ho_periods[["cycle_number", "pass_number"]].to_numpy(),
-        np.array([[NUM_CYCLE, NUM_PASS]]),
+        np.array([[NUM_CYCLE, NUM_PASS], [NUM_CYCLE, NUM_PASS2]]),
     )
 
 
-def test_query_date(fc_source, l3_lr_ssh_basic):
+def test_query_date(fc_source, l3_lr_ssh_basic_1):
     data = fc_source.query_date(start=DATE_START, end=DATE_END)
 
     assert data[TIME].values[0] >= DATE_START
@@ -88,7 +88,7 @@ def test_query_date(fc_source, l3_lr_ssh_basic):
     for field in fc_source.variables().values():
         assert field.name in data
         assert np.array_equal(
-            data[field.name].values, l3_lr_ssh_basic[field.name].values
+            data[field.name].values, l3_lr_ssh_basic_1[field.name].values
         )
 
     fields = {TIME, LONGITUDE, LATITUDE, VAR1, VAR2}
@@ -96,20 +96,19 @@ def test_query_date(fc_source, l3_lr_ssh_basic):
     assert not (set(fields) - set(data.variables))
 
 
-def test_query_date_nadir_swath(fc_source, caplog):
+def test_query_date_nadir_swath(fc_source):
     backend_kwargs = {
         "nadir": True,
         "swath": False,
     }
-    caplog.set_level(logging.WARNING)
 
-    fc_source.query_date(start=DATE_START, end=DATE_END, backend_kwargs=backend_kwargs)
-
-    assert any(
-        "The nadir/swath parameters cannot be applied to this collection"
-        in record.message
-        for record in caplog.records
-    )
+    with pytest.warns(
+        UserWarning,
+        match="The nadir/swath parameters cannot be applied to this collection",
+    ):
+        fc_source.query_date(
+            start=DATE_START, end=DATE_END, backend_kwargs=backend_kwargs
+        )
 
     assert "nadir" not in backend_kwargs
     assert "swath" not in backend_kwargs
@@ -178,16 +177,26 @@ def test_query_date_bbox(fc_source, data_ref):
     assert data[LATITUDE].size == 6
 
 
-def test_query_orbit(fc_source, l3_lr_ssh_basic):
+def test_query_orbit(fc_source, l3_lr_ssh_basic_1):
     data = fc_source.query_orbit(cycle_number=NUM_CYCLE, pass_number=NUM_PASS)
 
-    assert data[PASS_NUMBER].values[0] == NUM_PASS
-    assert data[CYCLE_NUMBER].values[-1] <= NUM_CYCLE
+    assert np.all(data[PASS_NUMBER].values == NUM_PASS)
+    assert np.all(data[CYCLE_NUMBER].values == NUM_CYCLE)
     for field in fc_source.variables().values():
         assert field.name in data
         assert np.array_equal(
-            data[field.name].values, l3_lr_ssh_basic[field.name].values
+            data[field.name].values, l3_lr_ssh_basic_1[field.name].values
         )
+
+    data = fc_source.query_orbit(
+        cycle_number=NUM_CYCLE, pass_number=[NUM_PASS, NUM_PASS2]
+    )
+
+    assert np.array_equal(
+        data[PASS_NUMBER].values,
+        [NUM_PASS, NUM_PASS, NUM_PASS, NUM_PASS2, NUM_PASS2, NUM_PASS2],
+    )
+    assert np.all(data[CYCLE_NUMBER].values == NUM_CYCLE)
 
     fields = {TIME, LONGITUDE, LATITUDE, VAR1, VAR2}
     data = fc_source.query_orbit(
@@ -196,22 +205,51 @@ def test_query_orbit(fc_source, l3_lr_ssh_basic):
     assert not (set(fields) - set(data.variables))
 
 
-def test_query_orbit_nadir_swath(fc_source, caplog):
+def test_query_orbit_concat_false(fc_source, l3_lr_ssh_basic_1, l3_lr_ssh_basic_2):
+    data = fc_source.query_orbit(
+        cycle_number=NUM_CYCLE, pass_number=[NUM_PASS, NUM_PASS2], concat=False
+    )
+
+    assert isinstance(data, list)
+    assert len(data) == 2
+
+    assert np.all(data[0][PASS_NUMBER].values == NUM_PASS)
+    assert np.all(data[0][CYCLE_NUMBER].values == NUM_CYCLE)
+    assert np.all(data[1][PASS_NUMBER].values == NUM_PASS2)
+    assert np.all(data[1][CYCLE_NUMBER].values == NUM_CYCLE)
+
+    for field in fc_source.variables().values():
+        assert field.name in data[0]
+        assert np.array_equal(
+            data[0][field.name].values, l3_lr_ssh_basic_1[field.name].values
+        )
+        assert field.name in data[1]
+        assert np.array_equal(
+            data[1][field.name].values, l3_lr_ssh_basic_2[field.name].values
+        )
+
+        with pytest.warns(
+            UserWarning, match="Retrieving pass_numbers of cycle 1 by listing the files"
+        ):
+            data = fc_source.query_orbit(cycle_number=NUM_CYCLE, concat=False)
+
+    assert isinstance(data, list)
+    assert len(data) == 2
+
+
+def test_query_orbit_nadir_swath(fc_source):
     backend_kwargs = {
         "nadir": True,
         "swath": False,
     }
-    caplog.set_level(logging.WARNING)
 
-    fc_source.query_orbit(
-        cycle_number=NUM_CYCLE, pass_number=NUM_PASS, backend_kwargs=backend_kwargs
-    )
-
-    assert any(
-        "The nadir/swath parameters cannot be applied to this collection"
-        in record.message
-        for record in caplog.records
-    )
+    with pytest.warns(
+        UserWarning,
+        match="The nadir/swath parameters cannot be applied to this collection",
+    ):
+        fc_source.query_orbit(
+            cycle_number=NUM_CYCLE, pass_number=NUM_PASS, backend_kwargs=backend_kwargs
+        )
 
     assert "nadir" not in backend_kwargs
     assert "swath" not in backend_kwargs

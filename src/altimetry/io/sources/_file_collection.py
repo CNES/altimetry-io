@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses as dc
 import enum
-import logging
+import warnings
 from typing import Any
 
 import fcollections.core as fc_core
@@ -34,8 +34,6 @@ from ._model import (
 FC_CONST_TIME = "time"
 FC_CONST_CYCLE_NUMBER = "cycle_number"
 FC_CONST_PASS_NUMBER = "pass_number"
-
-LOGGER = logging.getLogger(__name__)
 
 
 class FCollectionType(enum.Enum):
@@ -202,10 +200,11 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         backend_kwargs = backend_kwargs or {}
 
         if "nadir" in backend_kwargs or "swath" in backend_kwargs:
-            LOGGER.warning(
+            msg = (
                 "The nadir/swath parameters cannot be applied to this collection."
                 " Please open a NADIR_L2/NADIR_L3 collection to query nadir data."
             )
+            warnings.warn(msg, UserWarning, stacklevel=2)
             backend_kwargs.pop("nadir", None)
             backend_kwargs.pop("swath", None)
 
@@ -215,10 +214,10 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         }
         is_bbox = isinstance(polygon, tuple)
 
-        polygon = polygon_bounding_box(polygon=polygon)
-
-        # FCollections doesn't allow bbox=None as kwarg
         if polygon is not None:
+            polygon = polygon_bounding_box(polygon)
+
+            # FCollections doesn't allow bbox=None as kwarg
             request_kwargs["bbox"] = polygon
 
         data = self._database.query(
@@ -229,10 +228,10 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         if data is None:
             return self._empty_dataset()
 
-        # Deactivate polygon restriction if the polygon was a bbox
-        # -> the selection was done by fcollections
-        if is_bbox:
-            polygon = None
+        # Deactivate polygon restriction if the polygon is None or was
+        # a bbox -> the selection will be done by fcollections's query
+        if polygon is None or is_bbox:
+            return data
 
         return self.restrict_to_polygon(data=data, polygon=polygon)
 
@@ -243,14 +242,16 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
-    ) -> xr.Dataset:
+        concat: bool = True,
+    ) -> xr.Dataset | list[xr.Dataset]:
         backend_kwargs = backend_kwargs or {}
 
         if "nadir" in backend_kwargs or "swath" in backend_kwargs:
-            LOGGER.warning(
+            msg = (
                 "The nadir/swath parameters cannot be applied to this collection."
                 " Please open a NADIR_L2/NADIR_L3 collection to query nadir data."
             )
+            warnings.warn(msg, UserWarning, stacklevel=2)
             backend_kwargs.pop("nadir", None)
             backend_kwargs.pop("swath", None)
 
@@ -262,11 +263,47 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         }
         is_bbox = isinstance(polygon, tuple)
 
-        polygon = polygon_bounding_box(polygon=polygon)
-
-        # FCollections doesn't allow bbox=None as kwarg
         if polygon is not None:
+            polygon = polygon_bounding_box(polygon)
+
+            # FCollections doesn't allow bbox=None as kwarg
             request_kwargs["bbox"] = polygon
+
+        if not concat:
+            if pass_number is None:
+                msg = (
+                    f"Retrieving pass_numbers of cycle {cycle_number} "
+                    "by listing the files (this may take a moment). "
+                    "Set the pass_number argument to speed up the query."
+                )
+                warnings.warn(msg, UserWarning, stacklevel=2)
+
+                # retrieve available pass numbers corresponding to provided cycle
+                df = self._database.list_files(cycle_number=cycle_number)
+                pass_number = sorted(df["pass_number"].unique().tolist())
+
+            data = []
+            if isinstance(cycle_number, int):
+                cycle_number = [cycle_number]
+            if isinstance(pass_number, int):
+                pass_number = [pass_number]
+
+            combinations = [(c, p) for c in cycle_number for p in pass_number]
+            for c, p in combinations:
+                data.append(
+                    self._database.query(
+                        cycle_number=c,
+                        pass_number=p,
+                        selected_variables=variables,
+                        **request_kwargs,
+                    )
+                )
+            # Deactivate polygon restriction if the polygon is None or was
+            # a bbox -> the selection will be done by fcollections's query
+            if polygon is None or is_bbox:
+                return data
+
+            return [self.restrict_to_polygon(data=ds, polygon=polygon) for ds in data]
 
         data = self._database.query(
             cycle_number=cycle_number,
@@ -277,10 +314,10 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         if data is None:
             return self._empty_dataset()
 
-        # Deactivate polygon restriction if the polygon was a bbox
-        # -> the selection was done by fcollections
-        if is_bbox:
-            polygon = None
+        # Deactivate polygon restriction if the polygon is None or was
+        # a bbox -> the selection will be done by fcollections's query
+        if polygon is None or is_bbox:
+            return data
 
         return self.restrict_to_polygon(data=data, polygon=polygon)
 

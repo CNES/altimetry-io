@@ -109,7 +109,8 @@ class AltimetrySource(Generic[T], abc.ABC):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
-    ) -> xr.Dataset:
+        concat: bool = True,
+    ) -> xr.Dataset | list[xr.Dataset]:
         """Query data between two dates.
 
         Parameters
@@ -122,11 +123,15 @@ class AltimetrySource(Generic[T], abc.ABC):
             Selection polygon on which to reduce the data.
         backend_kwargs
             Backend parameters to pass to the query.
+        concat
+            By default, each period is requested individually and the resulting datasets
+            are concatenated into a single complete dataset. If this parameter is set to
+            False, a list of datasets (one per period) is returned instead.
 
         Returns
         -------
         :
-            Dataset respecting the query constraints.
+            Dataset or list of datasets respecting the query constraints.
         """
         if isinstance(periods, tuple):
             periods = [periods]
@@ -140,6 +145,9 @@ class AltimetrySource(Generic[T], abc.ABC):
             )
             for p in periods
         ]
+
+        if not concat:
+            return data
 
         return xr.concat(data, dim=self.index)
 
@@ -181,7 +189,8 @@ class AltimetrySource(Generic[T], abc.ABC):
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
-    ) -> xr.Dataset:
+        concat: bool = True,
+    ) -> xr.Dataset | list[xr.Dataset]:
         """Query data for a set of cycles and passes.
 
         Parameters
@@ -196,17 +205,22 @@ class AltimetrySource(Generic[T], abc.ABC):
             Selection polygon on which to reduce the data.
         backend_kwargs
             Backend parameters to pass to the query.
+        concat
+            By default, each half orbit is requested individually and the resulting
+            datasets are concatenated into a single complete dataset. If this
+            parameter is set to False, a list of datasets (one per half orbit) is
+            returned instead.
 
         Returns
         -------
         :
-            Dataset respecting the query constraints.
+            Dataset or list of datasets respecting the query constraints.
         """
 
     def restrict_to_polygon(
         self,
         data: xr.Dataset,
-        polygon: PolygonLike | None = None,
+        polygon: PolygonLike,
     ) -> xr.Dataset:
         """Apply a polygon selection to the provided data.
 
@@ -222,9 +236,6 @@ class AltimetrySource(Generic[T], abc.ABC):
         :
             Dataset reduced to the polygon constraints.
         """
-        if polygon is None:
-            return data
-
         return restrict_to_polygon(
             data=data,
             polygon=polygon,

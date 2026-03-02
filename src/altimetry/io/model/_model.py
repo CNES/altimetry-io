@@ -100,7 +100,8 @@ class AltimetryData:
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
-    ) -> xr.Dataset:
+        concat: bool = True,
+    ) -> xr.Dataset | list[xr.Dataset]:
         """Query data between two dates.
 
         Parameters
@@ -116,11 +117,15 @@ class AltimetryData:
             tuple of floats as (lon_min, lat_min, lon_max, lat_max).
         backend_kwargs
             Additional parameters to pass to the underlying data source.
+        concat
+            By default, each period is requested individually and the resulting datasets
+            are concatenated into a single complete dataset. If this parameter is set to
+            False, a list of datasets (one per period) is returned instead.
 
         Returns
         -------
         :
-            Dataset respecting the query constraints.
+            Dataset or list of datasets respecting the query constraints.
         """
 
         return self.source.query(
@@ -128,6 +133,7 @@ class AltimetryData:
             variables=variables,
             polygon=polygon,
             backend_kwargs=backend_kwargs,
+            concat=concat,
         )
 
     def query_orbit(
@@ -137,7 +143,8 @@ class AltimetryData:
         variables: list[str] | None = None,
         polygon: PolygonLike | None = None,
         backend_kwargs: dict[str, Any] | None = None,
-    ) -> xr.Dataset:
+        concat: bool = True,
+    ) -> xr.Dataset | list[xr.Dataset]:
         """Query data for a set of cycles and passes.
 
         Parameters
@@ -155,11 +162,16 @@ class AltimetryData:
             tuple of floats as (lon_min, lat_min, lon_max, lat_max).
         backend_kwargs
             Additional parameters to pass to the underlying data source.
+        concat
+            By default, each half orbit is requested individually and the resulting
+            datasets are concatenated into a single complete dataset. If this
+            parameter is set to False, a list of datasets (one per half orbit) is
+            returned instead.
 
         Returns
         -------
         :
-            Dataset respecting the query constraints.
+            Dataset or list of datasets respecting the query constraints.
         """
         return self.source.query_orbit(
             cycle_number=cycle_number,
@@ -167,4 +179,5 @@ class AltimetryData:
             variables=variables,
             polygon=polygon,
             backend_kwargs=backend_kwargs,
+            concat=concat,
         )
