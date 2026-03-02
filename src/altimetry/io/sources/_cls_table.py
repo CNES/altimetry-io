@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import dataclasses as dc
-import logging
+import warnings
 from contextlib import AbstractContextManager
 from functools import lru_cache
 from typing import Any
@@ -20,8 +20,6 @@ from ._model import (
     AltimetrySource,
     AltimetryVariable,
 )
-
-LOGGER = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=10000)
@@ -293,7 +291,8 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 or pass_start_info[0] != cycle_nb
                 or pass_end_info[0] != cycle_nb
             ):
-                LOGGER.warning("Cycle %s not found in %s.", cycle_nb, self.orf)
+                msg = f"Cycle {cycle_nb} not found in {self.orf}."
+                warnings.warn(msg, UserWarning, stacklevel=2)
                 data.append(self._empty_dataset())
                 continue
 
@@ -356,12 +355,8 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
                 )
 
                 if pass_info is None:
-                    LOGGER.warning(
-                        "Cycle %s, pass %s not found in %s.",
-                        cycle_nb,
-                        pass_nb,
-                        self.orf,
-                    )
+                    msg = f"Cycle {cycle_nb}, pass {pass_nb} not found in {self.orf}."
+                    warnings.warn(msg, UserWarning, stacklevel=2)
                     data.append(self._empty_dataset())
                     continue
 

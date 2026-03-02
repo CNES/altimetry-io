@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses as dc
 import enum
-import logging
+import warnings
 from typing import Any
 
 import fcollections.core as fc_core
@@ -34,8 +34,6 @@ from ._model import (
 FC_CONST_TIME = "time"
 FC_CONST_CYCLE_NUMBER = "cycle_number"
 FC_CONST_PASS_NUMBER = "pass_number"
-
-LOGGER = logging.getLogger(__name__)
 
 
 class FCollectionType(enum.Enum):
@@ -202,10 +200,11 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         backend_kwargs = backend_kwargs or {}
 
         if "nadir" in backend_kwargs or "swath" in backend_kwargs:
-            LOGGER.warning(
+            msg = (
                 "The nadir/swath parameters cannot be applied to this collection."
                 " Please open a NADIR_L2/NADIR_L3 collection to query nadir data."
             )
+            warnings.warn(msg, UserWarning, stacklevel=2)
             backend_kwargs.pop("nadir", None)
             backend_kwargs.pop("swath", None)
 
@@ -248,10 +247,11 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         backend_kwargs = backend_kwargs or {}
 
         if "nadir" in backend_kwargs or "swath" in backend_kwargs:
-            LOGGER.warning(
+            msg = (
                 "The nadir/swath parameters cannot be applied to this collection."
                 " Please open a NADIR_L2/NADIR_L3 collection to query nadir data."
             )
+            warnings.warn(msg, UserWarning, stacklevel=2)
             backend_kwargs.pop("nadir", None)
             backend_kwargs.pop("swath", None)
 
@@ -271,15 +271,16 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
 
         if not concat:
             if pass_number is None:
+                msg = (
+                    f"Retrieving pass_numbers of cycle {cycle_number} "
+                    "by listing the files (this may take a moment). "
+                    "Set the pass_number argument to speed up the query."
+                )
+                warnings.warn(msg, UserWarning, stacklevel=2)
+
                 # retrieve available pass numbers corresponding to provided cycle
                 df = self._database.list_files(cycle_number=cycle_number)
                 pass_number = sorted(df["pass_number"].unique().tolist())
-
-                LOGGER.warning(
-                    "No pass_number provided. "
-                    "Available pass numbers in the database are: %s",
-                    pass_number,
-                )
 
             data = []
             if isinstance(cycle_number, int):
