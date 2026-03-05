@@ -1,5 +1,3 @@
-import logging
-
 import numpy as np
 import pytest
 import shapely as shp
@@ -156,20 +154,18 @@ def test_query_date(fc_source, l3_lr_ssh_basic_1):
     assert not (set(fields) - set(data.variables))
 
 
-def test_query_date_nadir_swath(fc_source, caplog):
-    backend_kwargs = {
-        "nadir": True,
-        "swath": False,
-    }
-    caplog.set_level(logging.WARNING)
+def test_query_date_nadir_swath(fc_source):
+    backend_kwargs = {"nadir": True, "swath": False}
 
-    fc_source.query_date(start=DATE_START, end=DATE_END, backend_kwargs=backend_kwargs)
-
-    assert any(
-        "The nadir/swath parameters cannot be applied to this collection"
-        in record.message
-        for record in caplog.records
-    )
+    with pytest.warns(
+        UserWarning,
+        match="The nadir/swath parameters cannot be applied to this collection",
+    ):
+        fc_source.query_date(
+            start=DATE_START,
+            end=DATE_END,
+            backend_kwargs=backend_kwargs,
+        )
 
     assert "nadir" not in backend_kwargs
     assert "swath" not in backend_kwargs
@@ -266,9 +262,7 @@ def test_query_orbit(fc_source, l3_lr_ssh_basic_1):
     assert not (set(fields) - set(data.variables))
 
 
-def test_query_orbit_concat_false(
-    fc_source, l3_lr_ssh_basic_1, l3_lr_ssh_basic_2, caplog
-):
+def test_query_orbit_concat_false(fc_source, l3_lr_ssh_basic_1, l3_lr_ssh_basic_2):
     data = fc_source.query_orbit(
         cycle_number=NUM_CYCLE, pass_number=[NUM_PASS, NUM_PASS2], concat=False
     )
@@ -290,36 +284,28 @@ def test_query_orbit_concat_false(
         assert np.array_equal(
             data[1][field.name].values, l3_lr_ssh_basic_2[field.name].values
         )
-
-    caplog.set_level(logging.WARNING)
-
-    data = fc_source.query_orbit(cycle_number=NUM_CYCLE, concat=False)
+        with pytest.warns(
+            UserWarning, match="Retrieving pass_numbers of cycle 1 by listing the files"
+        ):
+            data = fc_source.query_orbit(cycle_number=NUM_CYCLE, concat=False)
 
     assert isinstance(data, list)
     assert len(data) == 2
-    assert any(
-        "No pass_number provided. Available pass numbers in the database are: [1, 2]"
-        in record.message
-        for record in caplog.records
-    )
 
 
-def test_query_orbit_nadir_swath(fc_source, caplog):
+def test_query_orbit_nadir_swath(fc_source):
     backend_kwargs = {
         "nadir": True,
         "swath": False,
     }
-    caplog.set_level(logging.WARNING)
 
-    fc_source.query_orbit(
-        cycle_number=NUM_CYCLE, pass_number=NUM_PASS, backend_kwargs=backend_kwargs
-    )
-
-    assert any(
-        "The nadir/swath parameters cannot be applied to this collection"
-        in record.message
-        for record in caplog.records
-    )
+    with pytest.warns(
+        UserWarning,
+        match="The nadir/swath parameters cannot be applied to this collection",
+    ):
+        fc_source.query_orbit(
+            cycle_number=NUM_CYCLE, pass_number=NUM_PASS, backend_kwargs=backend_kwargs
+        )
 
     assert "nadir" not in backend_kwargs
     assert "swath" not in backend_kwargs
