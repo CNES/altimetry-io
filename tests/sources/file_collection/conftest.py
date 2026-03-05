@@ -74,6 +74,12 @@ def l3_lr_ssh_basic_2():
 
 
 @pytest.fixture(scope="session")
+def empty_data_dir(tmpdir_factory):
+    """An empty test folder."""
+    return pl.Path(tmpdir_factory.mktemp("no_swot_data"))
+
+
+@pytest.fixture(scope="session")
 def data_dir(l3_lr_ssh_basic_1, l3_lr_ssh_basic_2, tmpdir_factory):
     """The test folder will contain multiple netcdf."""
     data_dir = pl.Path(tmpdir_factory.mktemp("swot_data"))

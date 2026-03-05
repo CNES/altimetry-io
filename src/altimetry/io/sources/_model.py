@@ -78,7 +78,7 @@ class AltimetrySource(Generic[T], abc.ABC):
         """Variables contained in this source."""
 
     @abc.abstractmethod
-    def period(self) -> tuple[np.datetime64, np.datetime64]:
+    def period(self) -> tuple[np.datetime64 | None, np.datetime64 | None]:
         """Period covered by this source."""
 
     @abc.abstractmethod

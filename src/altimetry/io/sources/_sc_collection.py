@@ -77,7 +77,7 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
 
         return self._fields
 
-    def period(self) -> tuple[np.datetime64, np.datetime64]:
+    def period(self) -> tuple[np.datetime64 | None, np.datetime64 | None]:
         return self._collection.period()
 
     def half_orbit_periods(

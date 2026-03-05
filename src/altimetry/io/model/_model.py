@@ -66,7 +66,7 @@ class AltimetryData:
 
         return data
 
-    def period(self) -> tuple[np.datetime64, np.datetime64]:
+    def period(self) -> tuple[np.datetime64 | None, np.datetime64 | None]:
         """Period covered by this altimetric data source."""
         return self.source.period()
 

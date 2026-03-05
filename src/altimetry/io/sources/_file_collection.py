@@ -129,12 +129,9 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
             ho_data = pd_files[[FC_CONST_CYCLE_NUMBER, FC_CONST_PASS_NUMBER]].values
 
             data = np.empty(ho_data.shape[0], dtype=HALF_ORBIT_DTYPE)
+
             data[CONST_CYCLE_NUMBER] = ho_data[:, 0]
             data[CONST_PASS_NUMBER] = ho_data[:, 1]
-            data[CONST_START_TIME] = periods[:, 0]
-            data[CONST_END_TIME] = periods[:, 1]
-
-            self._data = pd.DataFrame(data)
         else:
             self._with_ho = False
 
@@ -142,10 +139,15 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
                 periods.shape[0],
                 dtype=HALF_ORBIT_DTYPE[[CONST_START_TIME, CONST_END_TIME]],
             )
-            data[CONST_START_TIME] = periods[:, 0]
-            data[CONST_END_TIME] = periods[:, 1]
 
-            self._data = pd.DataFrame(data)
+        data[CONST_START_TIME] = (
+            periods[:, 0] if periods.size > 0 else np.array([], dtype="datetime64[ns]")
+        )
+        data[CONST_END_TIME] = (
+            periods[:, 1] if periods.size > 0 else np.array([], dtype="datetime64[ns]")
+        )
+
+        self._data = pd.DataFrame(data)
 
         self._initialized = True
 
@@ -158,6 +160,9 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         info: fc_core.GroupMetadata = self._database.variables_info(
             **self._request_kwargs()
         )
+
+        if info is None:
+            return self._fields
 
         if info.subgroups:
             msg = "This collection contains subgroups. This is not supported yet."
@@ -172,8 +177,14 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
 
         return self._fields
 
-    def period(self) -> tuple[np.datetime64, np.datetime64]:
+    def period(self) -> tuple[np.datetime64 | None, np.datetime64 | None]:
         self._initialize()
+
+        if (
+            self._data[CONST_START_TIME].size == 0
+            or self._data[CONST_END_TIME].size == 0
+        ):
+            return (None, None)
 
         return (
             np.min(self._data[CONST_START_TIME].values),

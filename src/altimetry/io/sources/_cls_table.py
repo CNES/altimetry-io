@@ -191,7 +191,7 @@ class ClsTableSource(AltimetrySource[cls_t.TableMeasure]):
 
         return self._fields
 
-    def period(self) -> tuple[np.datetime64, np.datetime64]:
+    def period(self) -> tuple[np.datetime64 | None, np.datetime64 | None]:
         with TableContext(name=self.name) as table:
             first_date = table.find_next_date(
                 cls_t.round_vanilla_datetime(date=np.datetime64("1900"))
