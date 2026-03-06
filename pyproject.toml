@@ -41,9 +41,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/robin-cls/altimetry_io"
-Repository = "https://github.com/robin-cls/altimetry_io"
-Changelog = "https://github.com/robin-cls/altimetry_io/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/CNES/altimetry_io"
+Repository = "https://github.com/CNES/altimetry_io"
+Changelog = "https://github.com/CNES/altimetry_io/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 exclude = ["**/__pycache__", "**/.ipynb_checkpoints"]
