@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.2.1] - 2026-03-06
+
+### Changed
+- Updated project urls
+
+---
+
 ## [0.2.0] - 2026-03-05
 
 ### Added
