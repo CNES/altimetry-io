@@ -23,7 +23,7 @@ from ._model import DOC_PARAMETERS_ALTI_SOURCE, AltimetrySource, AltimetryVariab
 
 if TYPE_CHECKING:
     import geopandas as gpd_t
-    import pyinterp.geodetic as pyi_geo_t
+    from pyinterp.geometry import geographic
 
 
 @dc.dataclass(kw_only=True)
@@ -193,14 +193,18 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
         return self.restrict_to_polygon(data=data, polygon=polygon_gpd)
 
     @staticmethod
-    def _polygons(polygon: PolygonLike) -> tuple[gpd_t.GeoDataFrame, pyi_geo_t.Polygon]:
+    def _polygons(
+        polygon: PolygonLike,
+    ) -> tuple[gpd_t.GeoDataFrame, geographic.Polygon]:
         """Normalize provided polygon to a GeoDataFrame and, if possible, a
-        pyinterp.geodetic.Polygon."""
+        geographic.Polygon."""
         polygon_gpd = normalize_polygon(polygon=polygon)
 
         try:
-            import pyinterp.geodetic as pyi_geo
+            from pyinterp.geometry import geographic
         except ImportError:  # pragma: no cover
             return polygon_gpd, None
 
-        return polygon_gpd, pyi_geo.Polygon.read_wkt(polygon_gpd.loc[0, "geometry"].wkt)
+        return polygon_gpd, geographic.Polygon.read_wkt(
+            polygon_gpd.loc[0, "geometry"].wkt
+        )

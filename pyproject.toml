@@ -56,7 +56,7 @@ local_scheme = "no-local-version"
 [project.optional-dependencies]
 polygon = [
     "geopandas",
-    "pyinterp",
+    "pyinterp>=2026.2.0",
     "shapely",
 ]
 sources = [
@@ -66,7 +66,7 @@ sources = [
 testing = [
     "pytest",
     "geopandas",
-    "pyinterp",
+    "pyinterp>=2026.2.0",
     "shapely",
     "h5py",
     "dask",
