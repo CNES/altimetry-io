@@ -201,10 +201,10 @@ class ScCollectionSource(AltimetrySource[sc_io.Collection]):
         polygon_gpd = normalize_polygon(polygon=polygon)
 
         try:
-            from pyinterp.geometry import geographic
+            from pyinterp.geometry.geographic.algorithms import from_wkt
         except ImportError:  # pragma: no cover
             return polygon_gpd, None
 
-        return polygon_gpd, geographic.Polygon.read_wkt(
-            polygon_gpd.loc[0, "geometry"].wkt
-        )
+        geom = polygon_gpd.loc[0, "geometry"]
+
+        return polygon_gpd, from_wkt(geom.wkt)
