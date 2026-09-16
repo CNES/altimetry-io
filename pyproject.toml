@@ -56,7 +56,7 @@ local_scheme = "no-local-version"
 [project.optional-dependencies]
 polygon = [
     "geopandas",
-    "pyinterp",
+    "pyinterp>=2026.2.0",
     "shapely",
 ]
 sources = [
@@ -66,7 +66,7 @@ sources = [
 testing = [
     "pytest",
     "geopandas",
-    "pyinterp",
+    "pyinterp>=2026.2.0",
     "shapely",
     "h5py",
     "dask",
@@ -90,7 +90,10 @@ filterwarnings = [
     "error",
     # Can be safely ignored according to
     # https://github.com/Unidata/netcdf4-python/issues/1354
-    "ignore:numpy\\.ndarray size changed"
+    "ignore:numpy\\.ndarray size changed",
+    # Can be safely ignored according to
+    # https://github.com/Unidata/netcdf4-python/issues/1468
+    "ignore:Setting the shape on a NumPy array"
 ]
 
 [tool.ruff]

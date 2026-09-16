@@ -93,7 +93,9 @@ class FileCollectionSource(AltimetrySource[fc_core.FilesDatabase]):
         self.fs = normalize_file_system(fs=self.fs)
         self.ftype = normalize_enum(self.ftype, FCollectionType)
 
-        self._database = self.ftype.fc_database()(path=self.path, fs=self.fs)
+        self._database = self.ftype.fc_database()(
+            path=self.path, fs=self.fs, enable_layouts=False
+        )
 
     @property
     def handler(self) -> fc_core.FilesDatabase:
