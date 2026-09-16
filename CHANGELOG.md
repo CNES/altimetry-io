@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-09-16
+
+### Changed
+- Updated to support pyinterp > 2026
+- **Breaking**: dropped compatibility with pyinterp <= 2026 due to upstream API changes
+
+
 ---
 
 ## [0.2.1] - 2026-03-06
